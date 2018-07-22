@@ -1,0 +1,23 @@
+#+BEGIN_SRC python :exports both :results file  :var data=WordFreqChart
+  import matplotlib.pyplot as plt
+  import pandas as pd 
+
+  df = pd.DataFrame(data)
+
+  ax = df.ix[:, 1].plot(xticks=df.index)
+  ax = df.plot(kind='bar', figsize=(10,5))
+  ax.set_xticks(df.index)
+  ax.set_xticklabels(df.ix[:, 0], rotation=90)
+
+  filename = 'barchartPy.png'
+  plt.savefig(filename)
+
+  return 'barchartPy.png'
+#+END_SRC
+
+
+#+BEGIN_SRC R :results output graphics :file barchartR.png :var data=WordFreqChart 
+  png(file='barchartR.png',width=1000,height=700)
+  new <- head(data, horiz=TRUE, las=1)
+  barplot(new$occurences, names.arg=new$word)
+#+END_SRC
