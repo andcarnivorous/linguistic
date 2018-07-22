@@ -1,7 +1,6 @@
 ;;; linguistic.el --- A package for basic linguistic analysis.
 
 ;; Copyright (C) 2018 Andrew Favia
-
 ;; Author: Andrew Favia <drewlinguistics01 at gmail dot com>
 ;; Version: 0.1
 ;; Package-Requires ((cl-lib "0.5") (emacs "25"))
@@ -22,7 +21,6 @@
 ;; along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
-
 ;;
 ;; Carry out basic linguistic / text analysis on buffers with word frequency, bigrams, trigrams and collocation.
 ;;
@@ -123,26 +121,6 @@
       (print (linguistic-gram-stats newlist))
       (print (length newlist)))))
 
-(defun linguistic-bigram-minibuffer ()
-  "Read the buffer and return a list of all the bigrams in the minibuffer."
-  (interactive)
-  (let ((newlist '())
-	(words (linguistic-splitter (downcase (buffer-string)))))
-    (cl-loop for item on words while (cl-rest item) do
-	  (push (concat (cl-first item) " " (cl-second item)) newlist))
-    (print (reverse newlist))
-    (print (length newlist))))
-
-(defun linguistic-trigram-minibuffer ()
-  "Read the buffer and return a list of all the trigrams in the minibuffer."
-  (interactive)
-  (let ((newlist '())
-	(words (linguistic-splitter (downcase (buffer-string)))))
-    (cl-loop for item on words while (cl-rest item) do
-	  (push (concat (cl-first item) " " (cl-second item) " " (cl-third item)) newlist))
-    (print (reverse newlist))
-    (print (length newlist))))
-
 (defun linguistic-trigram ()
   "Read the buffer and return a list of all the trigrams and the number of trigrams in a new buffer."
   (interactive)
@@ -156,6 +134,7 @@
       (print (linguistic-gram-stats newlist)))))
 
 (defun linguistic-trigram2 (text)
+  "Return a list of all the trigrams in TEXT and their occurrences."
   (let ((newlist '())
 	(words (linguistic-splitter
 		(downcase text))))
@@ -235,6 +214,7 @@
 	(insert-file-contents (format "%s" (concat (file-name-directory graphs-dir) "graphs.org")))
 	(org-mode)
 	(indent-region (point-min) (point-max))
+	(goto-char (point-min))
 	(goto-char (search-forward-regexp "occurrences"))
 	(org-cycle)
 	(switch-to-buffer "*ngram-frequencies*")
@@ -245,11 +225,11 @@
 
 (define-minor-mode linguistic-mode
   "Minor mode that offers different tools for basic word frequency, collocation and bigram analysis.
-  \\{linguistic-mode}"    
+  \\{linguistic-mode}"
   :lighter "Linguistic Mode"
   :keymap (let ((map (make-sparse-keymap)))
 	    (define-key map (kbd "C-c C-w") 'linguistic-word-freq)
-	    (define-key map (kbd "C-c C-g") 'linguistic-grams-freq)
+	    (define-key map (kbd "C-c C-n") 'linguistic-grams-freq)
 	    (define-key map (kbd "C-c C-2") 'linguistic-bigram)
 	    (define-key map (kbd "C-c C-3") 'linguistic-trigram)
 	    map))
