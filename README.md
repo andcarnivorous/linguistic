@@ -33,6 +33,8 @@ The functions `linguistic-word-freq` and `linguistic-grams-freq` return an org b
 
 You can also choose whether or not to include `linguistic-stopwords` in the results and can change the list of stopwords with `M-x` `customize-variable` `linguistic-stopwords`.
 
+![example](img/wordfreq.jpg)
+
 ## New Features TODO list:
 
 - [ ] Customizable ngrams
