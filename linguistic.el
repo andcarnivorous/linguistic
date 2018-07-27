@@ -108,6 +108,31 @@
   "Apply ‘linguistic-count-raw-word-list’ to GRAMS."
   (linguistic-count-raw-word-list grams))
 
+(defun linguistic-concatlist (wordlist)
+  "Concatenate strings in WORDLIST."
+      (let ((result ""))
+        (dolist (item wordlist)
+          (setq result (cl-concatenate 'string result item " ")))
+    result))
+
+(defun linguistic-ngrams ()
+  "Read the buffer and return a list of all the ngrams (where n is an integer selected by the user)."
+  (interactive)
+    (let ((newlist '())
+	  (counter 0)
+	  (templist '())
+	  (limit (read-number "number insert"))
+	  (words (linguistic-splitter
+		  (downcase (buffer-string)))))
+      (cl-loop for item on words while (cl-rest item) do
+	       (dotimes (i limit) (progn
+				    (push (nth counter item) templist)
+				    (setq counter (1+ counter))))
+	       (push (concatlist (reverse templist)) newlist)
+	       (setq counter 0)
+	       (setq templist '())
+	       finally return (reverse newlist))))
+
 (defun linguistic-bigram ()
   "Read the buffer and return a list of all the bigrams and their occurrences in a new buffer."
   (interactive)
