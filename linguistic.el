@@ -33,6 +33,9 @@
 
 (require 'cl-lib)
 
+
+;;; Groups and Variables
+
 (defgroup linguistic-analysis nil
   "Linguistic-mode settings for stopwords and extraction."
   :group 'linguistic-analysis)
@@ -57,6 +60,9 @@
   "List of stopwords to exclude from extraction."
   :group 'linguistic-analysis
   :type '(repeat string))
+
+
+;;; Functions
 
 (defun linguistic-collocation ()
   "Search for and return every occurrence of a keyword in the buffer plus the words on its sides (as many as given on each side)."
@@ -115,66 +121,47 @@
           (setq result (cl-concatenate 'string result item " ")))
     result))
 
+(defun print-elements-of-list (list)
+  "Print each element of LIST on a line of its own."
+  (while list
+    (print (car list))
+    (setq list (cdr list))))
+
 (defun linguistic-ngrams ()
-  "Read the buffer and return a list of all the ngrams (where n is an integer selected by the user)."
+  "Read the buffer and return in a new buffer a list of all the ngrams (where n is an integer selected by the user) and their number."
   (interactive)
+  (with-output-to-temp-buffer "*ngrams*"
     (let ((newlist '())
 	  (counter 0)
 	  (templist '())
 	  (limit (read-number "number insert"))
 	  (words (linguistic-splitter
 		  (downcase (buffer-string)))))
-      (cl-loop for item on words while (cl-rest item) do
+      (cl-loop for item on words while (>= (length (cl-rest item)) limit) do
 	       (dotimes (i limit) (progn
 				    (push (nth counter item) templist)
 				    (setq counter (1+ counter))))
-	       (push (concatlist (reverse templist)) newlist)
+	       (push (linguistic-concatlist (reverse templist)) newlist)
+	       (setq counter 0)
+	       (setq templist '())
+	       finally (progn
+			 (switch-to-buffer "*ngrams*")
+			 (print-elements-of-list (reverse newlist))
+			 (print (length newlist)))))))
+
+(defun linguistic-ngrams-nobuff (wordlist limit)
+  "Extract ngrams from WORDLIST.  The size of the ngrams is given by LIMIT."
+    (let ((newlist '())
+	  (counter 0)
+	  (templist '()))
+      (cl-loop for item on wordlist while (>= (length (cl-rest item)) limit) do
+	       (dotimes (i limit) (progn
+				    (push (nth counter item) templist)
+				    (setq counter (1+ counter))))
+	       (push (linguistic-concatlist (reverse templist)) newlist)
 	       (setq counter 0)
 	       (setq templist '())
 	       finally return (reverse newlist))))
-
-(defun linguistic-bigram ()
-  "Read the buffer and return a list of all the bigrams and their occurrences in a new buffer."
-  (interactive)
-  (with-output-to-temp-buffer "*bigrams*"
-    (let ((newlist '())
-	  (words (linguistic-splitter (downcase (buffer-string)))))
-      (cl-loop for item on words while (cl-rest item) do
-	    (push (concat (cl-first item) " " (cl-second item)) newlist))
-      (switch-to-buffer "*bigrams*")
-      (print newlist)
-      (print (linguistic-gram-stats newlist))
-      (print (length newlist)))))
-
-(defun linguistic-trigram ()
-  "Read the buffer and return a list of all the trigrams and the number of trigrams in a new buffer."
-  (interactive)
-  (with-output-to-temp-buffer "*trigrams*"
-    (let ((newlist '())
-	  (words (linguistic-splitter
-		  (downcase (buffer-string)))))
-      (cl-loop for item on words while (cl-rest item) do
-	    (push (concat (cl-first item) " " (cl-second item) " " (cl-third item)) newlist))
-      (switch-to-buffer "*trigrams*")
-      (print (linguistic-gram-stats newlist)))))
-
-(defun linguistic-trigram2 (text)
-  "Return a list of all the trigrams in TEXT and their occurrences."
-  (let ((newlist '())
-	(words (linguistic-splitter
-		(downcase text))))
-    (cl-loop for item on words while (cl-rest item) do
-	  (push (concat (cl-first item) " " (cl-second item) " " (cl-third item)) newlist))
-    (linguistic-gram-stats newlist)))
-
-(defun linguistic-bigram2 (text)
-  "Return a list of all the bigrams in TEXT and their occurrences."
-  (let ((newlist '())
-	(words (linguistic-splitter
-		(downcase text))))
-    (cl-loop for item on words while (cl-rest item) do
-	  (push (concat (cl-first item) " " (cl-second item)) newlist))
-    (linguistic-gram-stats newlist)))
 
 (defun linguistic-wordstopper (wordlist)
   "Delete items in WORDLIST matching the variable LINGUISTIC-STOPWORDS."
@@ -223,10 +210,12 @@
   "Return the most frequent bigrams or trigrams in a buffer or region in an org buffer ready to be plotted.  Finally, save a CSV copy of the org-table in the home dir.  Function modified from user xuchunyang on Stack Exchange in https://emacs.stackexchange.com/questions/13514/how-to-obtain-the-statistic-of-the-the-frequency-of-words-in-a-buffer ."
   (interactive)
   (let* ((size (read-number "How long result list:"))
-	 (gram (read-number "Insert gram number (2 or 3):"))
-	 (words (if (use-region-p) (downcase (buffer-substring (region-beginning) (region-end)))
-		  (downcase (buffer-string))))
-	 (word-list (if (= gram 3) (linguistic-trigram2 words) (linguistic-bigram2 words))))
+	 (gram (read-number "Insert gram size number (e.g. 3 for trigrams):"))
+	 (words (if (use-region-p) (linguistic-splitter (downcase (buffer-substring (region-beginning) (region-end))))
+	  (linguistic-splitter (downcase (buffer-string)))))
+	 (raw-gram-list (linguistic-ngrams-nobuff words gram))
+	 (word-list (linguistic-count-raw-word-list raw-gram-list)))
+    (print word-list)
     (with-current-buffer (get-buffer-create "*ngram-frequencies*")
       (erase-buffer)
       (insert "#+PLOT: NGramFreqChart ind:1 set:\"style fill solid\" with:boxes set:\"boxwidth 0.7\" set:\"xrange [-0.5:10.5]\" set:\"yrange [0:]\" \n #+NAME: WordFreqChart \n")
@@ -248,6 +237,9 @@
 	(org-table-export "~/GramFreq.csv" "orgtbl-to-csv")
 	(message "File  GramFreq.csv  created.")))))
 
+
+;;; Mode
+
 (define-minor-mode linguistic-mode
   "Minor mode that offers different tools for basic word frequency, collocation and bigram analysis.
   \\{linguistic-mode}"
@@ -255,8 +247,7 @@
   :keymap (let ((map (make-sparse-keymap)))
 	    (define-key map (kbd "C-c C-w") 'linguistic-word-freq)
 	    (define-key map (kbd "C-c C-n") 'linguistic-grams-freq)
-	    (define-key map (kbd "C-c C-2") 'linguistic-bigram)
-	    (define-key map (kbd "C-c C-3") 'linguistic-trigram)
+	    (define-key map (kbd "C-c C-g") 'linguistic-ngrams)
 	    map))
 
 (provide 'linguistic)
