@@ -95,6 +95,9 @@
 	  (setcar (nthcdr (seq-position words keyword) words) "X")))
       (switch-to-buffer "*collocation*"))))
 
+;; Function linguistic-count-raw-word-list modified from user xuchunyang on Stack Exchange
+;; https://emacs.stackexchange.com/questions/13514/how-to-obtain-the-statistic-of-the-the-frequency-of-words-in-a-buffer
+
 (defun linguistic-count-raw-word-list (raw-word-list)
   "Count the occurrences of each element in RAW-WORD-LIST and return an association list.  Function taken and modified from user xuchunyang on Stack Exchange in https://emacs.stackexchange.com/questions/13514/how-to-obtain-the-statistic-of-the-the-frequency-of-words-in-a-buffer."
   (let ((result nil))
@@ -172,14 +175,16 @@
 		 (push x final))
 	     finally return final)))
 
-;; Function modified from user xuchunyang on Stack Exchange in https://emacs.stackexchange.com/questions/13514/how-to-obtain-the-statistic-of-the-the-frequency-of-words-in-a-buffer
+;; Function linguistic-word-freq modified from user xuchunyang on Stack Exchange
+;; https://emacs.stackexchange.com/questions/13514/how-to-obtain-the-statistic-of-the-the-frequency-of-words-in-a-buffer
 
 (defun linguistic-word-freq ()
   "Return the most frequent words in a buffer or region in an org buffer ready to be plotted.  Finally, save a CSV copy of the org-table in the home dir.  Function modified from xuchunyang on Stack Exchange in https://emacs.stackexchange.com/questions/13514/how-to-obtain-the-statistic-of-the-the-frequency-of-words-in-a-buffer ."
   (interactive)
   (let* ((size (read-number "How long result list?:"))
 	 (stopper (yes-or-no-p "Do you want to delete stopwords?"))
-	 (words (if (use-region-p) (linguistic-splitter (downcase (buffer-substring (region-beginning) (region-end))))
+	 (words (if (use-region-p)
+		    (linguistic-splitter (downcase (buffer-substring (region-beginning) (region-end))))
 		  (linguistic-splitter (downcase (buffer-string)))))
          (raw-word-list (if stopper (append (linguistic-wordstopper words)) (append words)))
          (word-list (linguistic-count-raw-word-list raw-word-list)))
@@ -204,18 +209,19 @@
 	(org-table-export "~/WordFreq.csv" "orgtbl-to-csv")
 	(message "File  WordFreq.csv  created.")))))
 
-;; Function modified from user xuchunyang on Stack Exchange in https://emacs.stackexchange.com/questions/13514/how-to-obtain-the-statistic-of-the-the-frequency-of-words-in-a-buffer
+;; Function linguistic-grams-freq modified from user xuchunyang on Stack Exchange
+;; https://emacs.stackexchange.com/questions/13514/how-to-obtain-the-statistic-of-the-the-frequency-of-words-in-a-buffer
 
 (defun linguistic-grams-freq ()
   "Return the most frequent bigrams or trigrams in a buffer or region in an org buffer ready to be plotted.  Finally, save a CSV copy of the org-table in the home dir.  Function modified from user xuchunyang on Stack Exchange in https://emacs.stackexchange.com/questions/13514/how-to-obtain-the-statistic-of-the-the-frequency-of-words-in-a-buffer ."
   (interactive)
   (let* ((size (read-number "How long result list:"))
 	 (gram (read-number "Insert gram size number (e.g. 3 for trigrams):"))
-	 (words (if (use-region-p) (linguistic-splitter (downcase (buffer-substring (region-beginning) (region-end))))
-	  (linguistic-splitter (downcase (buffer-string)))))
+	 (words (if (use-region-p)
+		    (linguistic-splitter (downcase (buffer-substring (region-beginning) (region-end))))
+		  (linguistic-splitter (downcase (buffer-string)))))
 	 (raw-gram-list (linguistic-ngrams-nobuff words gram))
 	 (word-list (linguistic-count-raw-word-list raw-gram-list)))
-    (print word-list)
     (with-current-buffer (get-buffer-create "*ngram-frequencies*")
       (erase-buffer)
       (insert "#+PLOT: NGramFreqChart ind:1 set:\"style fill solid\" with:boxes set:\"boxwidth 0.7\" set:\"xrange [-0.5:10.5]\" set:\"yrange [0:]\" \n #+NAME: WordFreqChart \n")
