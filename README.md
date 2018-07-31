@@ -88,7 +88,7 @@ When you call `linguistic-word-freq` you will be asked how long you want the res
 
 You will also be asked if you want to include stopwords or not. Stopwords are words that usually are not really relevant to word-frequency analysis (e.g. "and", "I", "what", "could", etc&#x2026;).
 
-</img/wordfreq.png>
+![example](./img/wordfreq.png)
 
 
 <a id="org0e99341"></a>
