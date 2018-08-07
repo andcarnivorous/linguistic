@@ -21,8 +21,9 @@
 ;; along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
-;;
-;; Carry out basic linguistic / text analysis on buffers with word frequency, bigrams, trigrams and collocation.
+
+;; Carry out basic linguistic / text analysis on buffers
+;; with word frequency, bigrams, trigrams and collocation.
 ;;
 ;; Usage:
 ;; `linguistic-word-freq' and `linguistic-grams-freq' return frequencies ready to plot.
@@ -124,7 +125,7 @@
           (setq result (cl-concatenate 'string result item " ")))
     result))
 
-(defun print-elements-of-list (list)
+(defun linguistic-print-elements-of-list (list)
   "Print each element of LIST on a line of its own."
   (while list
     (print (car list))
@@ -149,7 +150,7 @@
 	       (setq templist '())
 	       finally (progn
 			 (switch-to-buffer "*ngrams*")
-			 (print-elements-of-list (reverse newlist))
+			 (linguistic-print-elements-of-list (reverse newlist))
 			 (print (length newlist)))))))
 
 (defun linguistic-ngrams-nobuff (wordlist limit)
@@ -181,13 +182,13 @@
 (defun linguistic-word-freq ()
   "Return the most frequent words in a buffer or region in an org buffer ready to be plotted.  Finally, save a CSV copy of the org-table in the home dir.  Function modified from xuchunyang on Stack Exchange in https://emacs.stackexchange.com/questions/13514/how-to-obtain-the-statistic-of-the-the-frequency-of-words-in-a-buffer ."
   (interactive)
-  (let* ((size (read-number "How long result list?:"))
-	 (stopper (yes-or-no-p "Do you want to delete stopwords?"))
+  (let* ((stopper (yes-or-no-p "Do you want to delete stopwords?"))
 	 (words (if (use-region-p)
 		    (linguistic-splitter (downcase (buffer-substring (region-beginning) (region-end))))
 		  (linguistic-splitter (downcase (buffer-string)))))
          (raw-word-list (if stopper (append (linguistic-wordstopper words)) (append words)))
-         (word-list (linguistic-count-raw-word-list raw-word-list)))
+         (word-list (linguistic-count-raw-word-list raw-word-list))
+	 (size (read-number (format "How long result list: (max %d)" (length word-list)))))
     (with-current-buffer (get-buffer-create "*word-frequencies*")
       (erase-buffer)
       (insert "#+PLOT: WordFreqChart ind:1 set:\"style fill solid\" with:boxes set:\"boxwidth 0.7\" set:\"xrange [-0.5:10.5]\" set:\"yrange [0:]\" \n #+NAME: WordFreqChart \n")
@@ -215,13 +216,13 @@
 (defun linguistic-grams-freq ()
   "Return the most frequent bigrams or trigrams in a buffer or region in an org buffer ready to be plotted.  Finally, save a CSV copy of the org-table in the home dir.  Function modified from user xuchunyang on Stack Exchange in https://emacs.stackexchange.com/questions/13514/how-to-obtain-the-statistic-of-the-the-frequency-of-words-in-a-buffer ."
   (interactive)
-  (let* ((size (read-number "How long result list:"))
-	 (gram (read-number "Insert gram size number (e.g. 3 for trigrams):"))
+  (let* ((gram (read-number "Insert gram size number (e.g. 3 for trigrams):"))
 	 (words (if (use-region-p)
 		    (linguistic-splitter (downcase (buffer-substring (region-beginning) (region-end))))
 		  (linguistic-splitter (downcase (buffer-string)))))
-	 (raw-gram-list (linguistic-ngrams-nobuff words gram))
-	 (word-list (linguistic-count-raw-word-list raw-gram-list)))
+	 (raw-gram-list (linguistic-ngrams-nobuff words gram))	 
+	 (word-list (linguistic-count-raw-word-list raw-gram-list))
+	 (size (read-number (format "How long result list: (max %d)" (length word-list)))))
     (with-current-buffer (get-buffer-create "*ngram-frequencies*")
       (erase-buffer)
       (insert "#+PLOT: NGramFreqChart ind:1 set:\"style fill solid\" with:boxes set:\"boxwidth 0.7\" set:\"xrange [-0.5:10.5]\" set:\"yrange [0:]\" \n #+NAME: WordFreqChart \n")
@@ -253,7 +254,7 @@
   :keymap (let ((map (make-sparse-keymap)))
 	    (define-key map (kbd "C-c C-w") 'linguistic-word-freq)
 	    (define-key map (kbd "C-c C-n") 'linguistic-grams-freq)
-	    (define-key map (kbd "C-c C-g") 'linguistic-ngrams)
+	    (define-key map (kbd "C-c C-l") 'linguistic-ngrams)
 	    map))
 
 (provide 'linguistic)
