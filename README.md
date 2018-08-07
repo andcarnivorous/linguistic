@@ -138,7 +138,7 @@ Using `linguistic-grams-freq` to get the most frequent trigrams in the novel too
 
 # TODO 
 
--   [ ] Preview word-freq and gram-freq list length before prompt.
+-   [X] Preview word-freq and gram-freq list length before prompt.
 -   [ ] Affixes in collocation
 -   [ ] Snowball Stemmer
 
