@@ -1,12 +1,14 @@
 ;;; linguistic.el --- A package for basic linguistic analysis.
-
+;;
 ;; Copyright (C) 2018 Andrew Favia
 ;; Author: Andrew Favia <drewlinguistics01 at gmail dot com>
 ;; Version: 0.1
 ;; Package-Requires ((cl-lib "0.5") (emacs "25"))
 ;; Keywords: linguistics, text analysis, matching
 ;; URL: https://github.com/andcarnivorous/linguistic
-
+;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
 ;; This program is free software: you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
 ;; the Free Software Foundation, either version 3 of the License, or
@@ -19,21 +21,20 @@
 ;;
 ;; You should have received a copy of the GNU General Public License
 ;; along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
+;;
 ;;; Commentary:
-
+;;
 ;; Carry out basic linguistic / text analysis on buffers
 ;; with word frequency, bigrams, trigrams and collocation.
 ;;
 ;; Usage:
 ;; `linguistic-word-freq' and `linguistic-grams-freq' return frequencies ready to plot.
 ;; `linguistic-collocation' returns word occurrences in context.
-;; 
-
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; 
+;;
 ;;; Code:
 
 (require 'cl-lib)
-
 
 ;;; Groups and Variables
 
@@ -62,14 +63,15 @@
   :group 'linguistic-analysis
   :type '(repeat string))
 
+(defvar linguistic-regex-sentence "[\.\?!…‽][]\"'”’)}]*")
 
 ;;; Functions
 
 (defun linguistic-collocation ()
   "Search for and return every occurrence of a keyword in the buffer plus the words on its sides (as many as given on each side)."
   (interactive)
-  (let* ((x 0)
-	 (y 0)
+  (let* ((counter-right 0)
+	 (counter-left 0)
 	 (numafter (read-number "insert number of words after: "))
 	 (numbefore (read-number "insert number of words before: "))
 	 (words (split-string
@@ -79,25 +81,26 @@
 	 (onleft '()))
     (with-current-buffer (get-buffer-create "*collocation*")
       (while (member keyword words)
-	(while (< x numafter)
-	  (setq x (1+ x))
-	  (add-to-list 'onright (nth (+ (seq-position words keyword) x) words)))
-	(while (< y numbefore)
-	  (setq y (1+ y))
-	  (add-to-list 'onleft (nth (- (seq-position words keyword) y) words)))
+	(while (< counter-right numafter)
+	  (setq counter-right (1+ counter-right))
+	  (add-to-list 'onright (nth (+ (seq-position words keyword) counter-right) words)))
+	(while (< counter-left numbefore)
+	  (setq counter-left (1+ counter-left))
+	  (add-to-list 'onleft (nth (- (seq-position words keyword) counter-left) words)))
 	(progn
 	  (insert " \n" (concat (format "%s" onleft) "  "
 				(upcase (format "%s" (nth (seq-position words keyword) words)))
-				"  " (format "%s" (reverse onright))))
-	  (setq onright '())
-	  (setq onleft '())
-	  (setq x 0)
-	  (setq y 0)
+				"  " (format "%s" (nreverse onright))))
+	  (setq onright '()
+		onleft '()
+		counter-right 0
+		counter-left 0)
 	  (setcar (nthcdr (seq-position words keyword) words) "X")))
       (switch-to-buffer "*collocation*"))))
 
 ;; Function linguistic-count-raw-word-list modified from user xuchunyang on Stack Exchange
 ;; https://emacs.stackexchange.com/questions/13514/how-to-obtain-the-statistic-of-the-the-frequency-of-words-in-a-buffer
+
 
 (defun linguistic-count-raw-word-list (raw-word-list)
   "Count the occurrences of each element in RAW-WORD-LIST and return an association list.  Function taken and modified from user xuchunyang on Stack Exchange in https://emacs.stackexchange.com/questions/13514/how-to-obtain-the-statistic-of-the-the-frequency-of-words-in-a-buffer."
@@ -145,12 +148,12 @@
 	       (dotimes (i limit) (progn
 				    (push (nth counter item) templist)
 				    (setq counter (1+ counter))))
-	       (push (linguistic-concatlist (reverse templist)) newlist)
-	       (setq counter 0)
-	       (setq templist '())
+	       (push (linguistic-concatlist (nreverse templist)) newlist)
+	       (setq counter 0
+		     templist '())
 	       finally (progn
 			 (switch-to-buffer "*ngrams*")
-			 (linguistic-print-elements-of-list (reverse newlist))
+			 (linguistic-print-elements-of-list (nreverse newlist))
 			 (print (length newlist)))))))
 
 (defun linguistic-ngrams-nobuff (wordlist limit)
@@ -162,10 +165,10 @@
 	       (dotimes (i limit) (progn
 				    (push (nth counter item) templist)
 				    (setq counter (1+ counter))))
-	       (push (linguistic-concatlist (reverse templist)) newlist)
-	       (setq counter 0)
-	       (setq templist '())
-	       finally return (reverse newlist))))
+	       (push (linguistic-concatlist (nreverse templist)) newlist)
+	       (setq counter 0
+		     templist '())
+	       finally return (nreverse newlist))))
 
 (defun linguistic-wordstopper (wordlist)
   "Delete items in WORDLIST matching the variable LINGUISTIC-STOPWORDS."
@@ -220,7 +223,7 @@
 	 (words (if (use-region-p)
 		    (linguistic-splitter (downcase (buffer-substring (region-beginning) (region-end))))
 		  (linguistic-splitter (downcase (buffer-string)))))
-	 (raw-gram-list (linguistic-ngrams-nobuff words gram))	 
+	 (raw-gram-list (linguistic-ngrams-nobuff words gram))
 	 (word-list (linguistic-count-raw-word-list raw-gram-list))
 	 (size (read-number (format "How long result list: (max %d)" (length word-list)))))
     (with-current-buffer (get-buffer-create "*ngram-frequencies*")
@@ -245,6 +248,136 @@
 	(message "File  GramFreq.csv  created.")))))
 
 
+;;; UNDER WORK CORPUS BUILDER & SENTENCE ANALYSIS
+
+(defun linguistic-build-corpus ()
+  "Create an empty buffer called corpus."
+  (interactive)
+  (generate-new-buffer "corpus"))
+
+(defun linguistic-collect-file ()
+  "Copy the contents of any number of files into the buffer corpus."
+  (interactive)
+  (let ((num-of-files (read-number "How many files?")))
+    (dotimes (i num-of-files)
+      (let ((fname (read-file-name (format "Choose %d file/s: " num-of-files))))
+	(switch-to-buffer "corpus")
+	(insert-file-contents fname)
+	(insert "\n")))))
+
+(defun linguistic-collect-buffer ()
+    "Copy the contents of any number of buffers into the buffer corpus."
+  (interactive)
+  (let ((num-of-buffs (read-number "How many buffers?")))
+    (dotimes (i num-of-buffs)
+      (let* ((bname (read-buffer (format "Choose %d buffer/s :" num-of-buffs)))
+	     (data (progn (switch-to-buffer bname)(buffer-string))))
+	(switch-to-buffer "corpus")
+	(insert data "\n")))))
+
+(defun linguistic-collect-region ()
+    "Copy the contents of a region into the buffer corpus."
+  (interactive)
+  (let ((data (if (use-region-p)
+	       (buffer-substring (region-beginning)(region-end)))))
+    (switch-to-buffer "corpus")
+    (insert data "\n")))
+
+
+(defun linguistic-collocation-freq ()
+  "Search for and return every occurrence of a keyword in the buffer plus the words on its sides (as many as given on each side)."
+  (interactive)
+  (let* ((final-list '())
+	 (counter-right 0)
+	 (counter-left 0)
+	 (numafter (read-number "insert number of words after: "))
+	 (numbefore (read-number "insert number of words before: "))
+	 (words (split-string
+                 (downcase (replace-regexp-in-string "[\.\,\:\?\!\"\-\;]" " . " (buffer-string)))))
+	 (keyword (read-string "insert the word you are searching:"))
+	 (onright '())
+	 (onleft '()))
+    (with-current-buffer (get-buffer-create "*collocation*")
+      (while (member keyword words)
+	(while (< counter-right numafter)
+	  (setq counter-right (1+ counter-right))
+	  (add-to-list 'onright (nth (+ (seq-position words keyword) counter-right) words)))
+	(while (< counter-left numbefore)
+	  (setq counter-left (1+ counter-left))
+	  (add-to-list 'onleft (nth (- (seq-position words keyword) counter-left) words)))
+	(progn
+	  (let* ((occurrence (concat (format "%s" onleft) "  "
+				     (upcase (format "%s" (nth (seq-position words keyword) words)))
+				"  " (format "%s" (nreverse onright)))))
+	    (push occurrence final-list))
+	  (setq onright '()
+		onleft '()
+		counter-right 0
+		counter-left 0)
+	  (setcar (nthcdr (seq-position words keyword) words) "X")))
+      (switch-to-buffer "*collocation*")
+      (let ((list-to-print (linguistic-count-raw-word-list final-list)))
+	(cl-loop for x in list-to-print do (insert (format "%s" x) "\n"))))))
+
+
+(defun linguistic-next-sentence ()
+  "Go to the end of the present sentence."
+  (ignore-errors
+    (search-forward-regexp linguistic-regex-sentence)))
+
+(defun linguistic-count-sentences ()
+  "Count the number of sentences from point to the end of the buffer."
+  (interactive)
+  (let ((counter 0))
+      (while (save-excursion (linguistic-next-sentence))
+	(setq counter (1+ counter))
+	(linguistic-next-sentence))
+      (print (1+ counter))))
+
+(defun linguistic-sentence-length ()
+  "Calculate how many characters are there in a sentence."
+    (let* ((beg (point))
+	   (size (if (save-excursion (linguistic-next-sentence)) (- (linguistic-next-sentence) beg) nil)))
+      (if size
+	  size)))
+
+(defun linguistic-average-sent-length ()
+  "Calculate the mean length of a sentence in the buffer."
+  (interactive)
+  (save-excursion
+    (goto-char (point-min))
+    (let* ((sent-lenghts '()))
+      (while (save-excursion (linguistic-sentence-length))
+	(push (linguistic-sentence-length) sent-lenghts))
+      (let* ((total (apply '+ sent-lenghts))
+	     (mean (/ total (length sent-lenghts))))
+	(print mean)))))
+
+
+(defun linguistic-sentence-region ()
+  "Select current sentence."
+  (set-mark (point))
+  (goto-char (linguistic-next-sentence))
+  (let ((words (split-string (buffer-substring-no-properties (region-beginning) (region-end)))))
+    (set-mark nil)
+    (print words)))
+
+(defun linguistic-average-words-sent ()
+  "Return the average number of words in a sentence in the corpus."
+  (interactive)
+  (let ((sent-list '())
+	(sent-lengths '()))
+    (save-excursion
+      (goto-char (point-min))
+      (while (save-excursion (linguistic-sentence-length))
+	(push (linguistic-sentence-region) sent-list)))
+    (dolist (item sent-list sent-lengths)
+      (push (length item) sent-lengths))
+    (let* ((total (apply '+ sent-lengths)))
+      (print (/ total (length sent-lengths))))))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Mode
 
 (define-minor-mode linguistic-mode
@@ -255,6 +388,8 @@
 	    (define-key map (kbd "C-c C-w") 'linguistic-word-freq)
 	    (define-key map (kbd "C-c C-n") 'linguistic-grams-freq)
 	    (define-key map (kbd "C-c C-l") 'linguistic-ngrams)
+	    (define-key map (kbd "C-c C-k") 'linguistic-collocation)
+	    (define-key map (kbd "C-c C-f") 'linguistic-collocation-freq)
 	    map))
 
 (provide 'linguistic)
