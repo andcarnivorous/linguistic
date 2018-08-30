@@ -63,7 +63,7 @@
   :group 'linguistic-analysis
   :type '(repeat string))
 
-(defvar linguistic-regex-sentence "[\.\?!…‽][]\"'”’)}]*")
+(defvar linguistic-regex-sentence "[\\;\\:\\.\\?\\!\\…\\‽]")
 
 ;;; Functions
 
@@ -75,10 +75,10 @@
 	 (numafter (read-number "insert number of words after: "))
 	 (numbefore (read-number "insert number of words before: "))
 	 (words (split-string
-                 (downcase (replace-regexp-in-string "[\.\,\:\?\!\"\-\;]" " . " (buffer-string)))))
+                 (downcase (buffer-string))))
 	 (keyword (read-string "insert the word you are searching:"))
-	 (onright '())
-	 (onleft '()))
+	 (onright nil)
+	 (onleft nil))
     (with-current-buffer (get-buffer-create "*collocation*")
       (while (member keyword words)
 	(while (< counter-right numafter)
@@ -91,8 +91,8 @@
 	  (insert " \n" (concat (format "%s" onleft) "  "
 				(upcase (format "%s" (nth (seq-position words keyword) words)))
 				"  " (format "%s" (nreverse onright))))
-	  (setq onright '()
-		onleft '()
+	  (setq onright nil
+		onleft nil
 		counter-right 0
 		counter-left 0)
 	  (setcar (nthcdr (seq-position words keyword) words) "X")))
@@ -138,9 +138,9 @@
   "Read the buffer and return in a new buffer a list of all the ngrams (where n is an integer selected by the user) and their number."
   (interactive)
   (with-output-to-temp-buffer "*ngrams*"
-    (let ((newlist '())
+    (let ((newlist nil)
 	  (counter 0)
-	  (templist '())
+	  (templist nil)
 	  (limit (read-number "number insert"))
 	  (words (linguistic-splitter
 		  (downcase (buffer-string)))))
@@ -150,7 +150,7 @@
 				    (setq counter (1+ counter))))
 	       (push (linguistic-concatlist (nreverse templist)) newlist)
 	       (setq counter 0
-		     templist '())
+		     templist nil)
 	       finally (progn
 			 (switch-to-buffer "*ngrams*")
 			 (linguistic-print-elements-of-list (nreverse newlist))
@@ -158,21 +158,21 @@
 
 (defun linguistic-ngrams-nobuff (wordlist limit)
   "Extract ngrams from WORDLIST.  The size of the ngrams is given by LIMIT."
-    (let ((newlist '())
+    (let ((newlist nil)
 	  (counter 0)
-	  (templist '()))
+	  (templist nil))
       (cl-loop for item on wordlist while (>= (length (cl-rest item)) limit) do
 	       (dotimes (i limit) (progn
 				    (push (nth counter item) templist)
 				    (setq counter (1+ counter))))
 	       (push (linguistic-concatlist (nreverse templist)) newlist)
 	       (setq counter 0
-		     templist '())
+		     templist nil)
 	       finally return (nreverse newlist))))
 
 (defun linguistic-wordstopper (wordlist)
   "Delete items in WORDLIST matching the variable LINGUISTIC-STOPWORDS."
-  (let ((final '()))
+  (let ((final nil))
     (cl-loop for x in wordlist
 	     do
 	     (if (not (member x linguistic-stopwords))
@@ -287,7 +287,7 @@
 (defun linguistic-collocation-freq ()
   "Search for and return every occurrence of a keyword in the buffer plus the words on its sides (as many as given on each side)."
   (interactive)
-  (let* ((final-list '())
+  (let* ((final-list nil)
 	 (counter-right 0)
 	 (counter-left 0)
 	 (numafter (read-number "insert number of words after: "))
@@ -295,8 +295,8 @@
 	 (words (split-string
                  (downcase (replace-regexp-in-string "[\.\,\:\?\!\"\-\;]" " . " (buffer-string)))))
 	 (keyword (read-string "insert the word you are searching:"))
-	 (onright '())
-	 (onleft '()))
+	 (onright nil)
+	 (onleft nil))
     (with-current-buffer (get-buffer-create "*collocation*")
       (while (member keyword words)
 	(while (< counter-right numafter)
@@ -310,8 +310,8 @@
 				     (upcase (format "%s" (nth (seq-position words keyword) words)))
 				"  " (format "%s" (nreverse onright)))))
 	    (push occurrence final-list))
-	  (setq onright '()
-		onleft '()
+	  (setq onright nil
+		onleft nil
 		counter-right 0
 		counter-left 0)
 	  (setcar (nthcdr (seq-position words keyword) words) "X")))
@@ -346,7 +346,7 @@
   (interactive)
   (save-excursion
     (goto-char (point-min))
-    (let* ((sent-lenghts '()))
+    (let* ((sent-lenghts nil))
       (while (save-excursion (linguistic-sentence-length))
 	(push (linguistic-sentence-length) sent-lenghts))
       (let* ((total (apply '+ sent-lenghts))
@@ -360,13 +360,13 @@
   (goto-char (linguistic-next-sentence))
   (let ((words (split-string (buffer-substring-no-properties (region-beginning) (region-end)))))
     (set-mark nil)
-    (print words)))
+    words))
 
 (defun linguistic-average-words-sent ()
   "Return the average number of words in a sentence in the corpus."
   (interactive)
-  (let ((sent-list '())
-	(sent-lengths '()))
+  (let ((sent-list nil)
+	(sent-lengths nil))
     (save-excursion
       (goto-char (point-min))
       (while (save-excursion (linguistic-sentence-length))
@@ -376,6 +376,28 @@
     (let* ((total (apply '+ sent-lengths)))
       (print (/ total (length sent-lengths))))))
 
+(defun linguistic-sentence-region2 ()
+  "Select current sentence."
+  (set-mark (point))
+  (goto-char (linguistic-next-sentence))
+  (let ((words (buffer-substring-no-properties (region-beginning) (region-end))))
+    (set-mark nil)
+    words))
+
+
+(defun linguistic-concordance-by-sentence ()
+  "Search for and return every occurrence of a keyword in the buffer plus the sentence where it resides"
+  (interactive)
+  (let* ((keyword (downcase (read-string "insert the word you are searching:")))
+	 (sentences nil))
+    (save-excursion
+      (goto-char 0)
+      (while (save-excursion (linguistic-next-sentence))
+	(push (downcase (linguistic-sentence-region2)) sentences)))
+    (switch-to-buffer "*results*")
+    (dolist (item sentences)
+      (if (string-match keyword item)
+	  (insert (replace-regexp-in-string keyword (upcase keyword) item) "\n \n")))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Mode
