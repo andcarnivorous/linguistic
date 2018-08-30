@@ -34,16 +34,15 @@
 
 (require 'cl-lib)
 
-
 ;;; Groups and Variables
 
 (defgroup linguistic-analysis nil
   "Linguistic-mode settings for stopwords and extraction."
-  :group 'linguistic-analysis)
+  :group 'applications)
 
 (defcustom linguistic-splitter-characters "[\\*\\-\"\\.\\,\\:\\?\\!]" "Characters to find with RegEx for the function ‘linguistic-splitter’."
   :group 'linguistic-analysis
-  :type 'string)
+  :type 'regexp)
 
 (defcustom linguistic-stopwords '("what" "am" "during" "him" "we" "me" "under" "the"
 				  "i" "myself" "again" "be" "you" "yourself" "once" "that"
@@ -68,15 +67,15 @@
 (defun linguistic-collocation ()
   "Search for and return every occurrence of a keyword in the buffer plus the words on its sides (as many as given on each side)."
   (interactive)
-  (let* ((x 0)
+  (let ((x 0)
 	 (y 0)
 	 (numafter (read-number "insert number of words after: "))
 	 (numbefore (read-number "insert number of words before: "))
 	 (words (split-string
                  (downcase (replace-regexp-in-string "[\.\,\:\?\!\"\-\;]" " . " (buffer-string)))))
 	 (keyword (read-string "insert the word you are searching:"))
-	 (onright '())
-	 (onleft '()))
+	 (onright nil)
+	 (onleft nil))
     (with-current-buffer (get-buffer-create "*collocation*")
       (while (member keyword words)
 	(while (< x numafter)
@@ -88,11 +87,11 @@
 	(progn
 	  (insert " \n" (concat (format "%s" onleft) "  "
 				(upcase (format "%s" (nth (seq-position words keyword) words)))
-				"  " (format "%s" (reverse onright))))
-	  (setq onright '())
-	  (setq onleft '())
-	  (setq x 0)
-	  (setq y 0)
+				"  " (format "%s" (nreverse onright))))
+	  (setq onright nil
+		onleft nil
+		x 0
+		y 0)
 	  (setcar (nthcdr (seq-position words keyword) words) "X")))
       (switch-to-buffer "*collocation*"))))
 
@@ -127,17 +126,16 @@
 
 (defun linguistic-print-elements-of-list (list)
   "Print each element of LIST on a line of its own."
-  (while list
-    (print (car list))
-    (setq list (cdr list))))
+  (dolist (element list)
+    (print element)))
 
 (defun linguistic-ngrams ()
   "Read the buffer and return in a new buffer a list of all the ngrams (where n is an integer selected by the user) and their number."
   (interactive)
   (with-output-to-temp-buffer "*ngrams*"
-    (let ((newlist '())
+    (let ((newlist nil)
 	  (counter 0)
-	  (templist '())
+	  (templist nil)
 	  (limit (read-number "number insert"))
 	  (words (linguistic-splitter
 		  (downcase (buffer-string)))))
@@ -145,31 +143,31 @@
 	       (dotimes (i limit) (progn
 				    (push (nth counter item) templist)
 				    (setq counter (1+ counter))))
-	       (push (linguistic-concatlist (reverse templist)) newlist)
-	       (setq counter 0)
-	       (setq templist '())
+	       (push (linguistic-concatlist (nreverse templist)) newlist)
+	       (setq counter 0
+		     templist nil)
 	       finally (progn
 			 (switch-to-buffer "*ngrams*")
-			 (linguistic-print-elements-of-list (reverse newlist))
+			 (linguistic-print-elements-of-list (nreverse newlist))
 			 (print (length newlist)))))))
 
 (defun linguistic-ngrams-nobuff (wordlist limit)
   "Extract ngrams from WORDLIST.  The size of the ngrams is given by LIMIT."
-    (let ((newlist '())
+    (let ((newlist nil)
 	  (counter 0)
-	  (templist '()))
+	  (templist nil))
       (cl-loop for item on wordlist while (>= (length (cl-rest item)) limit) do
 	       (dotimes (i limit) (progn
 				    (push (nth counter item) templist)
 				    (setq counter (1+ counter))))
-	       (push (linguistic-concatlist (reverse templist)) newlist)
-	       (setq counter 0)
-	       (setq templist '())
-	       finally return (reverse newlist))))
+	       (push (linguistic-concatlist (nreverse templist)) newlist)
+	       (setq counter 0
+		     templist nil)
+	       finally return (nreverse newlist))))
 
 (defun linguistic-wordstopper (wordlist)
   "Delete items in WORDLIST matching the variable LINGUISTIC-STOPWORDS."
-  (let ((final '()))
+  (let ((final nil))
     (cl-loop for x in wordlist
 	     do
 	     (if (not (member x linguistic-stopwords))
@@ -220,7 +218,7 @@
 	 (words (if (use-region-p)
 		    (linguistic-splitter (downcase (buffer-substring (region-beginning) (region-end))))
 		  (linguistic-splitter (downcase (buffer-string)))))
-	 (raw-gram-list (linguistic-ngrams-nobuff words gram))	 
+	 (raw-gram-list (linguistic-ngrams-nobuff words gram))
 	 (word-list (linguistic-count-raw-word-list raw-gram-list))
 	 (size (read-number (format "How long result list: (max %d)" (length word-list)))))
     (with-current-buffer (get-buffer-create "*ngram-frequencies*")
@@ -247,6 +245,7 @@
 
 ;;; Mode
 
+     ;;;###autoload
 (define-minor-mode linguistic-mode
   "Minor mode that offers different tools for basic word frequency, collocation and bigram analysis.
   \\{linguistic-mode}"
