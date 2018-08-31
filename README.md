@@ -32,7 +32,7 @@ It was designed in order to introduce linguistics students and linguistics enthu
 You can use `M-x package-build-create-recipe` and use the following:
 
     (linguistic :fetcher github 
-    	    :repo "andcarnivorous/linguistic-mode" 
+    	    :repo "andcarnivorous/linguistic" 
     	    :files ("*.el" "*.org"))
 
 If you want to install with **git clone** you will have to tweak the functions `linguistic-gram-freq` and `linguistic-word-freq` in order for them to find the **graph.org** file.
