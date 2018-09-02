@@ -70,31 +70,31 @@
 (defun linguistic-collocation ()
   "Search for and return every occurrence of a keyword in the buffer plus the words on its sides (as many as given on each side)."
   (interactive)
-  (let* ((counter-right 0)
-	 (counter-left 0)
+  (let ((x 0)
+	 (y 0)
 	 (numafter (read-number "insert number of words after: "))
 	 (numbefore (read-number "insert number of words before: "))
 	 (words (split-string
-                 (downcase (buffer-string))))
+                 (downcase (replace-regexp-in-string "[\.\,\:\?\!\"\-\;]" " . " (buffer-string)))))
 	 (keyword (read-string "insert the word you are searching:"))
 	 (onright nil)
 	 (onleft nil))
     (with-current-buffer (get-buffer-create "*collocation*")
       (while (member keyword words)
-	(while (< counter-right numafter)
-	  (setq counter-right (1+ counter-right))
-	  (add-to-list 'onright (nth (+ (seq-position words keyword) counter-right) words)))
-	(while (< counter-left numbefore)
-	  (setq counter-left (1+ counter-left))
-	  (add-to-list 'onleft (nth (- (seq-position words keyword) counter-left) words)))
+	(while (< x numafter)
+	  (setq x (1+ x))
+	  (add-to-list 'onright (nth (+ (seq-position words keyword) x) words)))
+	(while (< y numbefore)
+	  (setq y (1+ y))
+	  (add-to-list 'onleft (nth (- (seq-position words keyword) y) words)))
 	(progn
 	  (insert " \n" (concat (format "%s" onleft) "  "
 				(upcase (format "%s" (nth (seq-position words keyword) words)))
 				"  " (format "%s" (nreverse onright))))
 	  (setq onright nil
 		onleft nil
-		counter-right 0
-		counter-left 0)
+		x 0
+		y 0)
 	  (setcar (nthcdr (seq-position words keyword) words) "X")))
       (switch-to-buffer "*collocation*"))))
 
