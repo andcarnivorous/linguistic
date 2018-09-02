@@ -67,33 +67,38 @@
 (defun linguistic-collocation ()
   "Search for and return every occurrence of a keyword in the buffer plus the words on its sides (as many as given on each side)."
   (interactive)
-  (let ((x 0)
-	 (y 0)
-	 (numafter (read-number "insert number of words after: "))
-	 (numbefore (read-number "insert number of words before: "))
-	 (words (split-string
-                 (downcase (replace-regexp-in-string "[\.\,\:\?\!\"\-\;]" " . " (buffer-string)))))
-	 (keyword (read-string "insert the word you are searching:"))
-	 (onright nil)
-	 (onleft nil))
+  (save-excursion
+    (goto-char (point-min))
+    (let* ((x 0)
+	   (y 0)
+	   (numafter (read-number "insert number of words after: "))
+	   (numbefore (read-number "insert number of words before: "))
+	   (wordss (split-string
+		    (downcase (replace-regexp-in-string "[\.\,\:\?\!\"\-\;]" " . " (buffer-string)))))
+	   (words (apply 'vector wordss))
+	   (keyword (read-string "insert the word you are searching:"))
+	   (onright nil)
+	   (onleft nil))
     (with-current-buffer (get-buffer-create "*collocation*")
-      (while (member keyword words)
+      (while (seq-position words keyword)
+	(let ((location (seq-position words keyword)))
 	(while (< x numafter)
 	  (setq x (1+ x))
-	  (add-to-list 'onright (nth (+ (seq-position words keyword) x) words)))
+	  (push (seq-elt words (+ location x)) onright))
 	(while (< y numbefore)
 	  (setq y (1+ y))
-	  (add-to-list 'onleft (nth (- (seq-position words keyword) y) words)))
+	  (push (seq-elt words (- location y)) onleft))
 	(progn
 	  (insert " \n" (concat (format "%s" onleft) "  "
-				(upcase (format "%s" (nth (seq-position words keyword) words)))
+				(upcase (format "%s" keyword))
 				"  " (format "%s" (nreverse onright))))
 	  (setq onright nil
 		onleft nil
 		x 0
 		y 0)
-	  (setcar (nthcdr (seq-position words keyword) words) "X")))
-      (switch-to-buffer "*collocation*"))))
+	  (aset words location "X"))))
+      (switch-to-buffer "*collocation*")))))
+
 
 ;; Function linguistic-count-raw-word-list modified from user xuchunyang on Stack Exchange
 ;; https://emacs.stackexchange.com/questions/13514/how-to-obtain-the-statistic-of-the-the-frequency-of-words-in-a-buffer
