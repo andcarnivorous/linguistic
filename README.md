@@ -29,10 +29,17 @@ It was designed in order to introduce linguistics students and linguistics enthu
 
 # How to install
 
-You can use `M-x package-build-create-recipe` and use the following:
+You can install linguistic-mode from MELPA with `M-x package-list-packages` after you have added the MELPA repository to your *.emacs* file with the following:
+
+```elisp
+    (add-to-list 'package-archives
+                 '("melpa" . "http://melpa.org/packages/"))
+```
+
+You can also use `M-x package-build-create-recipe` and use the following:
 
     (linguistic :fetcher github 
-    	    :repo "andcarnivorous/linguistic" 
+    	    :repo "andcarnivorous/linguistic-mode" 
     	    :files ("*.el" "*.org"))
 
 If you want to install with **git clone** you will have to tweak the functions `linguistic-gram-freq` and `linguistic-word-freq` in order for them to find the **graph.org** file.
