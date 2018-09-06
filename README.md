@@ -31,7 +31,14 @@ It was designed in order to introduce linguistics students and linguistics enthu
 
 # How to install
 
-You can use `M-x package-build-create-recipe` and use the following:
+You can install linguistic-mode from MELPA with `M-x package-list-packages` after you have added the MELPA repository to your *.emacs* file with the following:
+
+```elisp
+    (add-to-list 'package-archives
+                 '("melpa" . "http://melpa.org/packages/"))
+```
+
+You can also use `M-x package-build-create-recipe` and use the following:
 
     (linguistic :fetcher github 
     	    :repo "andcarnivorous/linguistic-mode" 
@@ -65,7 +72,7 @@ If you want to build a custom corpus from different files, buffers or regions yo
 -   `linguistic-collect-buffer`
 -   `linguistic-collect-region`
 
-With `linguistic-build-corpus` you will just create a new empy buffer called **corpus**, where then you can maybe copy-paste things from other windows in your OS.
+With `linguistic-build-corpus` you will just create a new empty buffer called **corpus**, where then you can maybe copy-paste things from other windows in your OS.
 
 With the other functions you can take the contents of multiple files, buffers or regions and have them put all together in a new buffer called **corpus**.
 
@@ -165,7 +172,6 @@ Using `linguistic-collocation`, with an i5, it took this machine 61 seconds to f
 Instead it took 33 seconds to find the same word with just 1 context word per side.
 
 Using `linguistic-grams-freq` to get the most frequent trigrams in the novel took 160 seconds.
-
 
 <a id="orge319ec9"></a>
 
