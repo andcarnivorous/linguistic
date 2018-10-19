@@ -4,7 +4,9 @@
 1.  [Introduction](#org0fed4e4)
 2.  [How to install](#orga6106ca)
 3.  [How to use](#org0d666de)
-    1.  [Collocation](#orgf47645c)
+    1.  [Building a Corpus](org0fed5e5)
+    2.  [Collocation](#orgf47645c)
+		1. [Collocation Frequency](orgf47655c)
     2.  [Ngrams](#org1be4169)
     3.  [Word Frequency](#org15e249f)
     4.  [Ngram Frequency](#org0e99341)
@@ -49,14 +51,41 @@ If you want to install with **git clone** you will have to tweak the functions `
 
 # How to use
 
-The main interactive functions are 4:
+The main interactive functions are 5:
 
--   `linguistic-collocation`
+-   `linguistic-collocation` &emsp;&emsp; (**C-c C-k**)
+-   `linguistic-collocation-freq` &emsp;&emsp; (**C-c C-f**)
 -   `linguistic-ngrams` &emsp;&emsp;&emsp;&emsp;(**C-c C-g**)
 -   `linguistic-word-freq` &emsp;&emsp; (**C-c C-w**)
--   `linguistic-grams-freq` &emsp;&emsp; (**C-c C-n**)
+-   `linguistic-grams-freq` &emsp;&emsp; (**C-c C-l**)
 
 If you activate the minor mode with `M-x linguistic-mode` these functions will be available with their respective keybindings.
+
+<a id="org0fed5e5"></a>
+
+## Building a Corpus
+
+If you want to build a custom corpus from different files, buffers or regions you can do so by using the functions (these do not have keybindings):
+
+-   `linguistic-build-corpus`
+-   `linguistic-collect-file`
+-   `linguistic-collect-buffer`
+-   `linguistic-collect-region`
+
+With `linguistic-build-corpus` you will just create a new empty buffer called **corpus**, where then you can maybe copy-paste things from other windows in your OS.
+
+With the other functions you can take the contents of multiple files, buffers or regions and have them put all together in a new buffer called **corpus**.
+
+This allows you to maybe take the contents of a .txt file, some **eww** buffers and a region of a file and put them all together to be scrutinized by means of the previous functions.
+
+
+### Basic operations
+
+With linguistic-mode you can get the number of sentences in a raw corpus and also the average number of characters or words per sentence.
+
+-   `linguistic-count-sentences`
+-   `linguistic-average-sent-length`
+-   `linguistic-average-words-sent`
 
 
 <a id="orgf47645c"></a>
@@ -73,7 +102,11 @@ If you use 0 as number for your context before and/or after the keyword the word
 
 Remember that the more words on the sides, the more it will take to analyze the buffer. The function also substitutes any punctuation with a period.
 
+<a id="orgf47655c"></a>
 
+### Collocation Frequency
+
+The new function `linguistic-collocation-freq` requires the same input as the other one, but it returns in a new buffer the list of all the collocates and their frequencies.
 
 
 <a id="org1be4169"></a>
@@ -139,7 +172,6 @@ Using `linguistic-collocation`, with an i5, it took this machine 61 seconds to f
 Instead it took 33 seconds to find the same word with just 1 context word per side.
 
 Using `linguistic-grams-freq` to get the most frequent trigrams in the novel took 160 seconds.
-
 
 <a id="orge319ec9"></a>
 
