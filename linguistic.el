@@ -71,8 +71,9 @@
   (interactive)
   (save-excursion
     (goto-char (point-min))
-    (let* ((x 0)
-	   (y 0)
+    (let* ((location 0)
+	   (counter-right 0)
+	   (counter-left 0)
 	   (numafter (read-number "insert number of words after: "))
 	   (numbefore (read-number "insert number of words before: "))
 	   (wordss (split-string
@@ -82,23 +83,22 @@
 	   (onright nil)
 	   (onleft nil))
     (with-current-buffer (get-buffer-create "*collocation*")
-      (while (seq-position words keyword)
-	(let ((location (seq-position words keyword)))
-	(while (< x numafter)
-	  (setq x (1+ x))
-	  (push (seq-elt words (+ location x)) onright))
-	(while (< y numbefore)
-	  (setq y (1+ y))
-	  (push (seq-elt words (- location y)) onleft))
+      (while (setq location (seq-position words keyword))
+	(while (< counter-right numafter)
+	  (setq counter-right (1+ counter-right))
+	  (push (seq-elt words (+ location counter-right)) onright))
+	(while (< counter-left numbefore)
+	  (setq counter-left (1+ counter-left))
+	  (push (seq-elt words (- location counter-left)) onleft))
 	(progn
 	  (insert " \n" (concat (format "%s" onleft) "  "
 				(upcase (format "%s" keyword))
 				"  " (format "%s" (nreverse onright))))
 	  (setq onright nil
 		onleft nil
-		x 0
-		y 0)
-	  (aset words location "X"))))
+		counter-right 0
+		counter-left 0)
+	  (aset words location "X")))
       (switch-to-buffer "*collocation*")))))
 
 ;; Function linguistic-count-raw-word-list modified from user xuchunyang on Stack Exchange
@@ -300,7 +300,7 @@
 	 (keyword (read-string "insert the word you are searching:"))
 	 (onright nil)
 	 (onleft nil))
-    (with-current-buffer (get-buffer-create "*collocation*")
+    (with-current-buffer (get-buffer-create "*collocation-frequency*")
       (while (member keyword words)
 	(while (< counter-right numafter)
 	  (setq counter-right (1+ counter-right))
