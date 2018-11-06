@@ -40,11 +40,11 @@
 
 (defgroup linguistic-analysis nil
   "Linguistic-mode settings for stopwords and extraction."
-  :group 'linguistic-analysis)
+  :group 'applications)
 
 (defcustom linguistic-splitter-characters "[\\*\\-\"\\.\\,\\:\\?\\!]" "Characters to find with RegEx for the function ‘linguistic-splitter’."
   :group 'linguistic-analysis
-  :type 'string)
+  :type 'regexp)
 
 (defcustom linguistic-stopwords '("what" "am" "during" "him" "we" "me" "under" "the"
 				  "i" "myself" "again" "be" "you" "yourself" "once" "that"
@@ -101,6 +101,7 @@
 	  (aset words location "X")))
       (switch-to-buffer "*collocation*")))))
 
+
 ;; Function linguistic-count-raw-word-list modified from user xuchunyang on Stack Exchange
 ;; https://emacs.stackexchange.com/questions/13514/how-to-obtain-the-statistic-of-the-the-frequency-of-words-in-a-buffer
 
@@ -133,9 +134,8 @@
 
 (defun linguistic-print-elements-of-list (list)
   "Print each element of LIST on a line of its own."
-  (while list
-    (print (car list))
-    (setq list (cdr list))))
+  (dolist (element list)
+    (print element)))
 
 (defun linguistic-ngrams ()
   "Read the buffer and return in a new buffer a list of all the ngrams (where n is an integer selected by the user) and their number."
@@ -203,7 +203,7 @@
       (dolist (elt (cl-subseq word-list 0 size))
 	(insert (format "| '%s' | %d |\n" (car elt) (cdr elt))))
       (insert "\n")
-      (let ((graphs-dir (shell-command-to-string (format "find %s/working/ -name 'graphs.org'" package-user-dir))))
+      (let ((graphs-dir (shell-command-to-string (format "find %s/linguistic* -name 'graphs.org'" package-user-dir))))
       (insert-file-contents (format "%s" (concat (file-name-directory graphs-dir) "graphs.org")))
 	(org-mode)
 	(indent-region (point-min) (point-max))
@@ -237,7 +237,7 @@
       (dolist (elt (cl-subseq word-list 0 size))
 	(insert (format "| '%s' | %d |\n" (car elt) (cdr elt))))
       (insert "\n")
-      (let ((graphs-dir (shell-command-to-string (format "find %s/working/ -name 'graphs.org'" package-user-dir))))
+      (let ((graphs-dir (shell-command-to-string (format "find %s/linguistic* -name 'graphs.org'" package-user-dir))))
 	(insert-file-contents (format "%s" (concat (file-name-directory graphs-dir) "graphs.org")))
 	(org-mode)
 	(indent-region (point-min) (point-max))
@@ -405,6 +405,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Mode
 
+     ;;;###autoload
 (define-minor-mode linguistic-mode
   "Minor mode that offers different tools for basic word frequency, collocation and bigram analysis.
   \\{linguistic-mode}"

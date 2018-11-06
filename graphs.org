@@ -17,7 +17,13 @@
 
 
 #+BEGIN_SRC R :results output graphics :file barchartR.png :var data=WordFreqChart 
-  png(file='barchartR.png',width=1000,height=700)
-  new <- head(data, horiz=TRUE, las=1)
-  barplot(new$occurences, names.arg=new$word)
+
+    png(file='barchartR.png', width = 550, height = 400)
+    new <- data
+    col.palette <- rgb(new$occurrences, max(new$occurrences)-new$occurrences,0,maxColorValue=max(new$occurrences))
+    data.bar <- barplot(new$occurrences, names.arg=new$word, space = 0, las = 2, col = col.palette, xlim = c(0, nrow(new)+1))
+    lines(x = data.bar, y = new$occurrences/nrow(new))
+    points(x = data.bar, y = new$occurrences/nrow(new))
+
+
 #+END_SRC
