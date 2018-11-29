@@ -42,7 +42,8 @@
   "Linguistic-mode settings for stopwords and extraction."
   :group 'applications)
 
-(defcustom linguistic-splitter-characters "[\\*\\-\"\\.\\,\\:\\?\\!]" "Characters to find with RegEx for the function ‘linguistic-splitter’."
+(defcustom linguistic-splitter-characters "[\\*\\-\\\"\\.\\,\\:\\?\\!]"
+  "Characters to find with RegEx for the function ‘linguistic-splitter’."
   :group 'linguistic-analysis
   :type 'regexp)
 
